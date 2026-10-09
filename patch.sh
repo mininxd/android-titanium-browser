@@ -149,6 +149,18 @@ sed -i 's|prefs::kPrivacySandboxApisEnabledV4, true|prefs::kPrivacySandboxApisEn
 sed -i 's|prefs::kPrivacySandboxRelatedWebsiteSetsEnabled, true|prefs::kPrivacySandboxRelatedWebsiteSetsEnabled, false|g' components/privacy_sandbox/privacy_sandbox_prefs.cc 2>/dev/null || true
 # Disable offline auto fetch background feature
 sed -i '/BASE_FEATURE(kOfflineAutoFetch/,/);/ s/base::FEATURE_ENABLED_BY_DEFAULT/base::FEATURE_DISABLED_BY_DEFAULT/' chrome/common/chrome_features.cc 2>/dev/null || true
+# Disable Google URL Tracker network fetches
+sed -i '/void GoogleURLTracker::StartFetch/,/{/ s/{/{\n  return;/' components/google/core/browser/google_url_tracker.cc 2>/dev/null || true
+# Disable Domain Reliability telemetry uploads
+sed -i '/DomainReliabilityUploader::UploadReport/,/{/ s/{/{\n  return;/' components/domain_reliability/uploader.cc 2>/dev/null || true
+# Disable Feedback report uploads
+sed -i '/FeedbackUploader::QueueReport/,/{/ s/{/{\n  return;/' components/feedback/feedback_uploader.cc 2>/dev/null || true
+# Disable Google Cloud Messaging (GCM/FCM) background connections
+sed -i '/void GCMClientImpl::Start/,/{/ s/{/{\n  return;/' components/gcm_driver/gcm_client_impl.cc 2>/dev/null || true
+# Disable Captive Portal probes to Google endpoints
+sed -i '/CaptivePortalService::DetectCaptivePortal/,/{/ s/{/{\n  return;/' chrome/browser/captive_portal/captive_portal_service.cc 2>/dev/null || true
+# Disable remote spelling check queries to Google
+sed -i '/bool SpellingServiceClient::RequestTextCheck/,/{/ s/{/{\n  return false;/' components/spellcheck/browser/spelling_service_client.cc 2>/dev/null || true
 
 sed -i 's|#if BUILDFLAG(IS_ANDROID)|#if 0|' content/public/renderer/render_frame_media_playback_options.cc
 
