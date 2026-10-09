@@ -273,4 +273,19 @@ if (content::WebContents::HasLiveWebContentsForBrowserContext(profile)) { return
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.REGULAR) {/|| mSupportedProfileType == SupportedProfileType.REGULAR || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD) {/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 
+# R8 / ProGuard aggressive code shrinking and size optimization
+if [ -f chrome/android/proguard/main.flags ]; then
+cat << 'EOF' >> chrome/android/proguard/main.flags
+
+# Additional R8 aggressive optimizations to minimize APK size
+-allowaccessmodification
+-mergeinterfacesaggressively
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+EOF
+fi
+
 export PATCHED=1

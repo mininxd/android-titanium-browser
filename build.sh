@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 source common.sh
 set_keys
 export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
@@ -25,8 +26,11 @@ rm -rf $SCRIPT_DIR/vanadium/patches/*component-updates.patch
 rm -rf $SCRIPT_DIR/vanadium/patches/*{pdf,PDF,for-content-public,toolbar-button,configs-from-config-app,config-app-parsing,new-tab-card,predictive-back}*.patch
 # rm -rf $SCRIPT_DIR/vanadium/patches/*crashpad*.patch
 replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "TITANIUM"
-replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "chrome+"
+replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Titanium"
 replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "titanium"
+find "$SCRIPT_DIR/vanadium/patches" -name '000[1-3]-*.patch' -exec sed -i 's@Titanium@chrome+@g' {} +
+sed -i 's|<string name="app_name" translatable="false">.*</string>|<string name="app_name" translatable="false">chrome+</string>|g' "$SCRIPT_DIR/vanadium/patches/0004-Vanadium-branding.patch" 2>/dev/null || true
+sed -i 's|Titanium bookmarks|chrome+ bookmarks|g; s|Titanium search|chrome+ search|g' "$SCRIPT_DIR/vanadium/patches/0004-Vanadium-branding.patch" 2>/dev/null || true
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
 gclient sync -D --no-history --nohooks
@@ -39,10 +43,10 @@ gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false
 mkdir -p out/tmp out/release
 
 autoninja -C out/Default chrome_public_apk
-mv $(find out/Default/apks -name 'Chrome*.apk') out/tmp/$VERSION-armeabi-v7a.apk
+mv $(find out/Default/apks -name '*[Cc]hrome*.apk' | head -n 1) out/tmp/$VERSION-armeabi-v7a.apk
 sed -i 's/target_cpu = "arm"/target_cpu = "arm64"/' out/Default/args.gn
 autoninja -C out/Default chrome_public_apk
-mv $(find out/Default/apks -name 'Chrome*.apk') out/tmp/$VERSION-arm64-v8a.apk
+mv $(find out/Default/apks -name '*[Cc]hrome*.apk' | head -n 1) out/tmp/$VERSION-arm64-v8a.apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
