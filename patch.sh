@@ -3,9 +3,10 @@
 mkdir -p chrome/android/java/res_titanium_base
 cp $SCRIPT_DIR/res/drawable/themed_app_icon.xml chrome/android/java/res_titanium_base/drawable/themed_app_icon.xml
 
-# Set app name to "chrome+"
-find chrome/android -name '*channel_constants*.xml' -o -name '*strings*.xml' 2>/dev/null | xargs -r sed -i 's|<string name="app_name"[^>]*>.*</string>|<string name="app_name" translatable="false">chrome+</string>|g'
-find chrome/android/java/res_* -name '*.xml' -exec sed -i 's|Vanadium|chrome+|g; s|Titanium|chrome+|g' {} + 2>/dev/null || true
+# Set app name to "Chrome Plus"
+find chrome/android -name '*channel_constants*.xml' -o -name '*strings*.xml' 2>/dev/null | xargs -r sed -i 's|<string name="app_name"[^>]*>.*</string>|<string name="app_name" translatable="false">Chrome Plus</string>|g'
+find chrome/android/java/res_* -name '*.xml' -exec sed -i 's|Vanadium|Chrome Plus|g; s|Titanium|Chrome Plus|g; s|chrome+|Chrome Plus|g' {} + 2>/dev/null || true
+find chrome/ -name '*.grd' -o -name '*.grdp' -o -name '*.xtb' 2>/dev/null | xargs -r sed -i 's|Titanium|Chrome Plus|g; s|Vanadium|Chrome Plus|g; s|chrome+|Chrome Plus|g'
 
 # Update app icon with icon.png across all densities
 python3 -c '

@@ -28,9 +28,6 @@ rm -rf $SCRIPT_DIR/vanadium/patches/*{pdf,PDF,for-content-public,toolbar-button,
 replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "TITANIUM"
 replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Titanium"
 replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "titanium"
-find "$SCRIPT_DIR/vanadium/patches" -name '000[1-3]-*.patch' -exec sed -i 's@Titanium@chrome+@g' {} +
-sed -i 's|<string name="app_name" translatable="false">.*</string>|<string name="app_name" translatable="false">chrome+</string>|g' "$SCRIPT_DIR/vanadium/patches/0004-Vanadium-branding.patch" 2>/dev/null || true
-sed -i 's|Titanium bookmarks|chrome+ bookmarks|g; s|Titanium search|chrome+ search|g' "$SCRIPT_DIR/vanadium/patches/0004-Vanadium-branding.patch" 2>/dev/null || true
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
 gclient sync -D --no-history --nohooks

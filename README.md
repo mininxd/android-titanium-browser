@@ -1,4 +1,4 @@
-# chrome+ Browser for Android
+# Chrome Plus Browser for Android
 
 [![Stars](https://img.shields.io/github/stars/jqssun/android-titanium-browser?label=Stars&logo=GitHub)](https://github.com/jqssun/android-titanium-browser)
 [![GitHub](https://img.shields.io/github/downloads/jqssun/android-titanium-browser/total?label=GitHub&logo=GitHub)](https://github.com/jqssun/android-titanium-browser/releases)
@@ -13,7 +13,7 @@ For the latest builds, see [**Releases**](https://github.com/jqssun/android-tita
 [<img height="48" alt="Get it on Google Play" src="https://jqssun.github.io/images/badges/google-play-store.svg">](https://play.google.com/store/apps/details?id=com.chrome.plus)
 [<img height="48" alt="Get it on GitHub" src="https://jqssun.github.io/images/badges/github.svg">](https://github.com/jqssun/android-titanium-browser/releases/latest)
 
-<img alt="chrome+ Browser for Android" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
+<img alt="Chrome Plus Browser for Android" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
 ## Usage
 
@@ -45,7 +45,7 @@ The option is available by using the menu button <kbd>⋮</kbd> in the top right
 ## Implementation
 
 > [!WARNING]
-> [chrome+ Browser for Android](#chrome-browser-for-android) only attempts to improve security and privacy where possible. For better protection on Android, you should instead use [GrapheneOS](https://grapheneos.org) with [Vanadium](https://vanadium.app), which additionally integrates patches into Android System WebView and provides significant kernel and memory management hardening on the OS level.
+> [Chrome Plus Browser for Android](#chrome-plus-browser-for-android) only attempts to improve security and privacy where possible. For better protection on Android, you should instead use [GrapheneOS](https://grapheneos.org) with [Vanadium](https://vanadium.app), which additionally integrates patches into Android System WebView and provides significant kernel and memory management hardening on the OS level.
 
 ```mermaid
 ---
@@ -63,7 +63,7 @@ flowchart TD
         n9["Generic Patches<small><br>patches/*.patch</small>"]
         n10["Subprojects Patches<small><br>subprojects_patches/**/*.patch</small>"]
   end
- subgraph s3["chrome+ Browser for Android"]
+ subgraph s3["Chrome Plus Browser for Android"]
         n11["GN Build Configuration<small><br>args.gn</small>"]
         n12["Signed Release"]
   end
