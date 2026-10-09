@@ -40,13 +40,9 @@ gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false
 mkdir -p out/tmp out/release
 
 autoninja -C out/Default chrome_public_apk
-mv $(find out/Default/apks -name '*[Cc]hrome*.apk' | head -n 1) out/tmp/$VERSION-armeabi-v7a.apk
-sed -i 's/target_cpu = "arm"/target_cpu = "arm64"/' out/Default/args.gn
-autoninja -C out/Default chrome_public_apk
 mv $(find out/Default/apks -name '*[Cc]hrome*.apk' | head -n 1) out/tmp/$VERSION-arm64-v8a.apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
-sign_apk out/tmp/$VERSION-armeabi-v7a.apk out/release/$VERSION-armeabi-v7a.apk
 sign_apk out/tmp/$VERSION-arm64-v8a.apk out/release/$VERSION-arm64-v8a.apk
 rm -rf $SCRIPT_DIR/keys
