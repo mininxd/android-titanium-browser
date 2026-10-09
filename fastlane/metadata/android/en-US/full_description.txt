@@ -19,4 +19,4 @@ WebRTC IP Policy
 
 Titanium Extension for Android is also available at https://github.com/jqssun/android-titanium-extension
 
-Titanium Browser for Android is under the GPL-2.0 license at https://github.com/jqssun/android-titanium-browser
+chrome+ Browser for Android is under the GPL-2.0 license at https://github.com/jqssun/android-titanium-browser

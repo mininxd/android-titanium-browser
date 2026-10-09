@@ -1,4 +1,4 @@
-chrome_public_manifest_package = "io.github.jqssun.helium"
+chrome_public_manifest_package = "com.chrome.plus"
 is_desktop_android = true
 target_os = "android"
 target_cpu = "arm"
@@ -15,9 +15,10 @@ enable_openxr = false
 enable_cardboard = false
 enable_remoting = false
 enable_reporting = false
-google_api_key = "x"
-google_default_client_id = "x"
-google_default_client_secret = "x"
+google_api_key = ""
+google_default_client_id = ""
+google_default_client_secret = ""
+use_official_google_api_keys = false
 
 use_siso = true
 use_login_database_as_backend = true
@@ -36,3 +37,19 @@ include_both_v8_snapshots_android_secondary_abi = false
 v8_enable_drumbrake = true
 v8_drumbrake_bounds_checks = true 
 generate_linker_map = true
+
+# Privacy and Anti-Telemetry Configurations
+include_crashpad = false
+safe_browsing_mode = 0
+enable_hangout_services_extension = false
+enable_mdns = false
+enable_service_discovery = false
+enable_bound_session_credentials = false
+enable_device_bound_sessions = false
+enable_glic = false
+enable_feed_v2 = false
+enable_media_remoting = false
+media_use_openh264 = false
+enable_platform_dolby_vision = false
+enable_platform_encrypted_dolby_vision = false
+enable_platform_dts_audio = false

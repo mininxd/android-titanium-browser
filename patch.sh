@@ -2,7 +2,40 @@
 
 mkdir -p chrome/android/java/res_titanium_base
 cp $SCRIPT_DIR/res/drawable/themed_app_icon.xml chrome/android/java/res_titanium_base/drawable/themed_app_icon.xml
-for icon in $(find chrome/android/java/res_titanium_base -type f -name '*.png'); do convert $icon -fill navy -tint 36 $icon && $SCRIPT_DIR/res/icon.sh $icon; done
+
+# Set app name to "chrome+"
+find chrome/android -name '*channel_constants*.xml' -o -name '*strings*.xml' 2>/dev/null | xargs -r sed -i 's|<string name="app_name"[^>]*>.*</string>|<string name="app_name" translatable="false">chrome+</string>|g'
+find chrome/android/java/res_* -name '*.xml' -exec sed -i 's|Vanadium|chrome+|g; s|Titanium|chrome+|g' {} + 2>/dev/null || true
+
+# Update app icon with icon.png across all densities
+python3 -c '
+import os
+from PIL import Image
+
+script_dir = os.environ.get("SCRIPT_DIR", ".")
+icon_path = os.path.join(script_dir, "icon.png")
+if not os.path.exists(icon_path):
+    icon_path = os.path.join(script_dir, "res", "icon.png")
+
+if os.path.exists(icon_path):
+    src = Image.open(icon_path).convert("RGBA")
+    for base in ["chrome/android/java/res_titanium_base", "chrome/android/java/res_vanadium_base", "chrome/android/java/res"]:
+        if os.path.exists(base):
+            for root, _, files in os.walk(base):
+                for f in files:
+                    if f.endswith(".png") and ("icon" in f.lower() or "launcher" in f.lower()):
+                        target_file = os.path.join(root, f)
+                        try:
+                            w, h = Image.open(target_file).size
+                            resized = src.resize((w, h), Image.Resampling.LANCZOS)
+                            resized.save(target_file)
+                            print(f"Updated icon: {target_file} ({w}x{h})")
+                        except Exception as e:
+                            print(f"Error updating {target_file}: {e}")
+'
+for icon in $(find chrome/android/java/res* -type f -name '*icon*.png' 2>/dev/null); do
+    [ -f "$SCRIPT_DIR/res/icon.sh" ] && $SCRIPT_DIR/res/icon.sh "$icon" || true
+done
 sed -i 's|<application |<application android:extractNativeLibs="false" |' chrome/android/java/AndroidManifest.xml
 sed -i 's|<data android:mimeType="message/rfc822"/>|<data android:mimeType="message/rfc822"/><data android:mimeType="application/pdf"/>|' chrome/android/java/AndroidManifest.xml
 sed -i '/com.google.ar.core.min_apk_version/d' third_party/arcore-android-sdk-client/AndroidManifest_basesplit.xml
@@ -26,7 +59,7 @@ sed -i 's|readBoolean(getSettingsPreferenceKey(moduleType), true)|readBoolean(ge
 sed -i 's|private static boolean verifyPackage(Context ctx, String pkgName, byte\[\] sha256CertDigestBytes) {|& if (true) return false; |' titanium/android_config/parser/java/src/app/titanium/config/TitaniumConfParser.java # config parser
 
 # sed -i 's|int ExpirationMilestoneForFlag(const char\* flag) {|int ExpirationMilestoneForFlag(const char* flag) { if ((true)) return -1;|' chrome/browser/unexpire_flags.cc
-for flag in "align-wakeups" "android-bottom-bar" "cct-open-in-browser-button-if-allowed-by-embedder" "darken-websites-checkbox-in-themes-setting" "enable-accessibility-sequential-focus" "enforce-incognito-isolation" "inline-pdf-v2" "jump-start-omnibox" "lock-controls-on-tablets-v2" "offline-auto-fetch" "use-fullscreen-insets-api"; do
+for flag in "align-wakeups" "android-bottom-bar" "cct-open-in-browser-button-if-allowed-by-embedder" "darken-websites-checkbox-in-themes-setting" "enable-accessibility-sequential-focus" "enforce-incognito-isolation" "inline-pdf-v2" "jump-start-omnibox" "lock-controls-on-tablets-v2" "use-fullscreen-insets-api"; do
     sed -i "/\"name\": \"$flag\"/,/}/ s/\"expiry_milestone\": [0-9]\+/\"expiry_milestone\": -1/" chrome/browser/flag-metadata.json
 done
 sed -i 's|newFlag(OmniboxFeatureList.OMNIBOX_SITE_SEARCH, FeatureState.ENABLED_IN_TEST);|newFlag(OmniboxFeatureList.OMNIBOX_SITE_SEARCH, FeatureState.ENABLED_IN_PROD);|' components/omnibox/common/android/java/src/org/chromium/components/omnibox/OmniboxFeatures.java # search
@@ -75,7 +108,48 @@ sed -i '$a@media (max-width: 600px) { .settings-window-title, .tabbed-pane-heade
 sed -i 's|document_->GetSettings() ? |document_->GetSettings() \&\& !document_->IsViewSource() ? |' third_party/blink/renderer/core/css/resolver/viewport_style_resolver.cc
 sed -i 's|kViewSourceLineWrappingEnabled, false|kViewSourceLineWrappingEnabled, true|' chrome/browser/prefs/browser_prefs.cc
 
-# playback
+# Privacy & anti-telemetry: disable data-sending APIs, beacons, pings, metrics, crash reports
+# Disable Beacon API (navigator.sendBeacon)
+sed -i '/bool PingLoader::SendBeaconCommon/,/{/ s/{/{\n  return true;/' third_party/blink/renderer/core/loader/ping_loader.cc 2>/dev/null || true
+# Disable Hyperlink Auditing (<a ping>)
+sed -i '/void PingLoader::SendLinkAuditPing/,/{/ s/{/{\n  return;/' third_party/blink/renderer/core/loader/ping_loader.cc 2>/dev/null || true
+# Disable Violation and security reports (CSP/Reporting API)
+sed -i '/void PingLoader::SendViolationReport/,/{/ s/{/{\n  return;/' third_party/blink/renderer/core/loader/ping_loader.cc 2>/dev/null || true
+# Disable renderer crash report generation
+sed -i '/MaybeGenerateCrashReport/,/{/ s/{/{\n  return;/' content/browser/renderer_host/render_frame_host_impl.cc 2>/dev/null || true
+# Disable metrics reporting preference and UKM feature
+sed -i '/kMetricsReportingEnabled/ s/GoogleUpdateSettings::GetCollectStatsConsent()/false/' chrome/browser/browser_process_impl.cc 2>/dev/null || true
+sed -i '/kMetricsReportingEnabled,/{N;s|kMetricsReportingEnabled,.*|kMetricsReportingEnabled, false);|}' chrome/browser/browser_process_impl.cc 2>/dev/null || true
+sed -i '/BASE_FEATURE(kUkmFeature/,/);/ s/base::FEATURE_ENABLED_BY_DEFAULT/base::FEATURE_DISABLED_BY_DEFAULT/' components/ukm/ukm_recorder_impl.cc 2>/dev/null || true
+sed -i '/BASE_FEATURE(kMetricsReportingFeature/,/);/ s/base::FEATURE_ENABLED_BY_DEFAULT/base::FEATURE_DISABLED_BY_DEFAULT/' chrome/browser/metrics/chrome_metrics_services_manager_client.cc 2>/dev/null || true
+# Disable page load metrics and lookalike navigation throttles
+sed -i '/MetricsNavigationThrottle::Create/,/{/ s/{/{\n  return nullptr;/' chrome/browser/page_load_metrics/metrics_navigation_throttle.cc 2>/dev/null || true
+sed -i '/MaybeCreateNavigationThrottle/,/{/ s/{/{\n  return nullptr;/' chrome/browser/lookalikes/lookalike_url_navigation_throttle.cc 2>/dev/null || true
+# Disable search suggestions and safe browsing defaults
+sed -i 's|prefs::kSearchSuggestEnabled, true|prefs::kSearchSuggestEnabled, false|g' chrome/browser/prefs/browser_prefs.cc 2>/dev/null || true
+sed -i 's|prefs::kSafeBrowsingEnabled, true|prefs::kSafeBrowsingEnabled, false|g' chrome/browser/prefs/browser_prefs.cc 2>/dev/null || true
+sed -i 's|prefs::kSafeBrowsingEnhanced, true|prefs::kSafeBrowsingEnhanced, false|g' chrome/browser/prefs/browser_prefs.cc 2>/dev/null || true
+# Disable WebRTC text log collection
+sed -i 's|prefs::kWebRtcTextLogCollectionAllowed, true|prefs::kWebRtcTextLogCollectionAllowed, false|g' chrome/browser/ui/browser_ui_prefs.cc 2>/dev/null || true
+# Disable X-Geo location header transmission
+sed -i 's|bool send_x_geo_header() const.*|bool send_x_geo_header() const { return false; }|' components/search_engines/template_url.h 2>/dev/null || true
+sed -i 's|send_x_geo_header = true;|send_x_geo_header = false;|' components/search_engines/template_url_data.cc 2>/dev/null || true
+sed -i 's|bool send_x_geo_header = true;|bool send_x_geo_header = false;|' components/search_engines/template_url_data.h 2>/dev/null || true
+# Neutralize Omaha & Component Updater endpoints and disable pings
+sed -i 's|https://update.googleapis.com/service/update2/json|about:blank|g; s|http://update.googleapis.com/service/update2/json|about:blank|g; s|https://update.vanadium.app/service/update2/json|about:blank|g; s|http://update.vanadium.app/service/update2/json|about:blank|g' components/component_updater/component_updater_url_constants.cc 2>/dev/null || true
+sed -i 's|https://update.googleapis.com/service/update2|about:blank|g; s|https://update.vanadium.app/service/update2|about:blank|g' chrome/android/java/src/org/chromium/chrome/browser/omaha/RequestGenerator.java 2>/dev/null || true
+sed -i 's|bool pings_enabled_ = true;|bool pings_enabled_ = false;|g' components/component_updater/component_updater_command_line_config_policy.h 2>/dev/null || true
+sed -i 's|bool background_downloads_enabled_ = true;|bool background_downloads_enabled_ = false;|g' components/component_updater/component_updater_command_line_config_policy.h 2>/dev/null || true
+# Disable intranet redirect probes (startup random DNS probes)
+sed -i '/void IntranetRedirectDetector::Start/,/{/ s/{/{\n  return;/' chrome/browser/intranet_redirect_detector.cc 2>/dev/null || true
+# Disable translate network fetch retries
+sed -i 's|kMaxRetry = 2;|kMaxRetry = 0;|' components/translate/core/browser/translate_url_fetcher.cc 2>/dev/null || true
+# Disable Privacy Sandbox and Related Website Sets
+sed -i 's|prefs::kPrivacySandboxApisEnabledV4, true|prefs::kPrivacySandboxApisEnabledV4, false|g' components/privacy_sandbox/privacy_sandbox_prefs.cc 2>/dev/null || true
+sed -i 's|prefs::kPrivacySandboxRelatedWebsiteSetsEnabled, true|prefs::kPrivacySandboxRelatedWebsiteSetsEnabled, false|g' components/privacy_sandbox/privacy_sandbox_prefs.cc 2>/dev/null || true
+# Disable offline auto fetch background feature
+sed -i '/BASE_FEATURE(kOfflineAutoFetch/,/);/ s/base::FEATURE_ENABLED_BY_DEFAULT/base::FEATURE_DISABLED_BY_DEFAULT/' chrome/common/chrome_features.cc 2>/dev/null || true
+
 sed -i 's|#if BUILDFLAG(IS_ANDROID)|#if 0|' content/public/renderer/render_frame_media_playback_options.cc
 
 # ext: viewport
